@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="bn"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AK TASK</title><script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="stylesheet" href="/static/style.css"></head>
+<body>
+<div class="topbar"><div class="brand"><div class="logo">AK</div><div><b>AK TASK</b><span>PREMIUM EARNING</span></div></div><div class="live">● LIVE</div></div>
+<main>
+<section id="home" class="screen">
+<div class="welcome"><div><span>WELCOME BACK</span><h1>Earn. Complete. Withdraw.</h1><p>Complete verified tasks and grow your wallet.</p></div><div class="spark">✦</div></div>
+<div class="balance"><div><small>TOTAL BALANCE</small><strong id="bal">৳0.00</strong><div class="balance-row"><span>Today's income</span><b id="today">৳0.00</b></div></div><div class="wallet-icon">৳</div></div>
+<div class="quick"><button onclick="show('tasks')"><i>✓</i><span>Tasks</span><small>Earn rewards</small></button><button onclick="show('invite')"><i>↗</i><span>Invite</span><small>Earn together</small></button><button onclick="show('profile')"><i>⇧</i><span>Withdraw</span><small>Request payout</small></button></div>
+<div class="section-head"><div><small>START EARNING</small><h2>Featured Tasks</h2></div><button onclick="show('tasks')" class="view">View all →</button></div>
+<div id="homeTasks"></div>
+</section>
+
+<section id="tasks" class="screen hidden"><div class="page-title"><small>EARN REWARDS</small><h1>Available Tasks</h1><p>Finish tasks to receive rewards in your wallet.</p></div><div id="taskList"></div></section>
+
+<section id="invite" class="screen hidden"><div class="page-title"><small>GROW YOUR NETWORK</small><h1>Invite Friends</h1><p>Share your code and build your community.</p></div><div class="ref-card"><div class="ref-badge">AK</div><h2>Your Referral</h2><p>Referral code</p><div class="copyrow"><b id="ref">—</b><button onclick="copyEl('ref')">COPY</button></div><p>Referral link</p><div class="copyrow"><input id="refLink" readonly><button onclick="copyEl('refLink')">COPY</button></div></div></section>
+
+<section id="profile" class="screen hidden"><div class="page-title"><small>ACCOUNT CENTER</small><h1>My Profile</h1><p>Manage your account and withdrawal.</p></div><div class="profile card"><div class="avatar" id="avatar">A</div><h2 id="name">User</h2><p class="muted">Telegram ID: <span id="tgid">—</span></p><hr><h3>Withdrawal Request</h3><input id="amount" type="number" placeholder="Enter amount"><select id="method"><option>bKash</option><option>Nagad</option><option>Rocket</option></select><input id="account" placeholder="Payment account number"><button class="primary" onclick="withdraw()">Submit Withdrawal</button></div></section>
+</main>
+<nav><button class="active" onclick="show('home')"><b>⌂</b><span>Home</span></button><button onclick="show('tasks')"><b>▣</b><span>Tasks</span></button><button onclick="show('invite')"><b>♧</b><span>Invite</span></button><button onclick="show('profile')"><b>◎</b><span>Profile</span></button></nav>
+<script>
+const tg=window.Telegram?.WebApp;tg?.ready();tg?.expand();const u=tg?.initDataUnsafe?.user||{id:"demo_"+Date.now(),first_name:"Demo User",username:""};const TGID=String(u.id);
+async function api(x,o={}){return (await fetch(x,o)).json()}
+async function boot(){await api("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({telegram_id:TGID,name:u.first_name||"User",username:u.username||"",ref:new URLSearchParams(location.search).get("ref")||""})});load()}
+async function load(){const d=await api("/api/data?telegram_id="+encodeURIComponent(TGID));if(!d.user)return;bal.textContent="৳"+Number(d.user.balance).toFixed(2);today.textContent="৳"+Number(d.today_income).toFixed(2);name.textContent=d.user.name;tgid.textContent=d.user.telegram_id;avatar.textContent=(d.user.name||"A")[0].toUpperCase();ref.textContent=d.user.ref_code;refLink.value=location.origin+"/?ref="+d.user.ref_code;let cards=d.tasks.map(t=>taskCard(t)).join("");taskList.innerHTML=cards||empty();homeTasks.innerHTML=d.tasks.slice(0,2).map(t=>taskCard(t)).join("")||empty()}
+function taskCard(t){return `<div class="task card"><div class="task-icon">✦</div><div class="task-main"><h3>${esc(t.title)}</h3><p>${esc(t.description||"Complete this task to earn your reward.")}</p><div class="task-bottom"><strong>৳${Number(t.reward).toFixed(2)}</strong>${t.link?`<a target="_blank" href="${esc(t.link)}">OPEN ↗</a>`:""}<button ${t.done?"disabled":""} onclick="done(${t.id})">${t.done?"COMPLETED ✓":"COMPLETE TASK"}</button></div></div></div>`}
+function empty(){return `<div class="card empty">No active tasks right now.<br><small>Check back soon.</small></div>`}
+async function done(id){const d=await api("/api/task",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({telegram_id:TGID,task_id:id})});alert(d.ok?"✓ Reward added to your wallet!":d.error);load()}
+async function withdraw(){const d=await api("/api/withdraw",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({telegram_id:TGID,amount:amount.value,method:method.value,account:account.value})});alert(d.ok?"✓ Withdrawal request submitted!":d.error);load()}
+function show(id){document.querySelectorAll(".screen").forEach(x=>x.classList.add("hidden"));document.getElementById(id).classList.remove("hidden");document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));let i=["home","tasks","invite","profile"].indexOf(id);if(i>=0)document.querySelectorAll("nav button")[i].classList.add("active");scrollTo(0,0)}
+function copyEl(id){navigator.clipboard.writeText(document.getElementById(id).value||document.getElementById(id).textContent);alert("Copied")}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}boot();
+</script></body></html>
